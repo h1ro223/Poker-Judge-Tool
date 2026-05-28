@@ -570,9 +570,10 @@ function renderRecordPanel() {
     const opts = `<option value="" selected disabled>選択してください</option>` +
         HAND_ORDER.map(h => `<option value="${h}">${HAND_NAMES[h]}（${PAYOUTS[h] > 0 ? '+' + PAYOUTS[h] : 'ハズレ'}）</option>`).join('');
 
-    // 記録用最終手札プリセット
-    const held = top.heldIndices.map(i => state.hand[i]);
-    state.recordFinalHand = [...held, ...Array(5 - held.length).fill(null)];
+    // 記録用最終手札プリセット（ホールドカードは元の位置に固定）
+    state.recordFinalHand = state.hand.map((card, i) =>
+        top.heldIndices.includes(i) ? { ...card } : null
+    );
 
     content.innerHTML = `
         <div class="record-section">
@@ -601,7 +602,10 @@ function renderRecordPanel() {
             </div>
         </div>
         <div class="record-section record-card-board-wrap">
-            <label class="form-label">ホールド後の最終手札（タップで入力）</label>
+            <div class="hand-title-row">
+                <label class="form-label" style="margin-bottom:0">ホールド後の最終手札</label>
+                <button class="btn-ghost btn-sm btn-scan" id="recordScanBtn" title="スクショから入力">📷</button>
+            </div>
             <div class="record-hand-preview" id="recordHandPreview"></div>
         </div>
         <div class="record-actions">
@@ -611,6 +615,10 @@ function renderRecordPanel() {
 
     renderRecordFinalHand();
     document.getElementById('saveResultBtn').addEventListener('click', savePlayResult);
+    document.getElementById('recordScanBtn').addEventListener('click', () => {
+        scanState.target = 'record';
+        document.getElementById('scanFileInput').click();
+    });
     // バリデーション: 選択変更時に警告を消す
     document.getElementById('finalHand').addEventListener('change', () => {
         document.getElementById('finalHand').classList.remove('invalid');
@@ -633,7 +641,6 @@ function renderRecordFinalHand() {
         el.addEventListener('click', () => {
             const idx = parseInt(el.dataset.index, 10);
             state.recordFinalHand[idx] = null;
-            compactRecordHand();
             renderRecordFinalHand();
         });
     });
@@ -972,9 +979,10 @@ function showToast(message, type = 'info') {
 // § 22. スクショ参照＋クイック5枚入力
 // =============================================================
 
-const scanState = { cards: [null,null,null,null,null], activeSlot: 0, selectedRank: null };
+const scanState = { cards: [null,null,null,null,null], activeSlot: 0, selectedRank: null, target: 'main' };
 
 function openScanInput() {
+    scanState.target = 'main';
     document.getElementById('scanFileInput').click();
 }
 
@@ -1071,7 +1079,7 @@ function renderScanUI(imgUrl) {
         </div>
         <div class="scan-actions">
             <button class="btn-ghost" id="scanCancelBtn">キャンセル</button>
-            <button class="btn-primary ${canApply ? '' : 'disabled'}" id="scanApplyBtn" ${canApply ? '' : 'disabled'}>✅ 適用する（${filledCount}/5）</button>
+            <button class="btn-primary ${canApply ? '' : 'disabled'}" id="scanApplyBtn" ${canApply ? '' : 'disabled'}>${canApply && scanState.target === 'main' ? '⚡ 期待値を計算' : `✅ 適用する（${filledCount}/5）`}</button>
         </div>
     `;
 
@@ -1119,20 +1127,31 @@ function renderScanUI(imgUrl) {
     // キャンセル/適用
     document.getElementById('scanCancelBtn').addEventListener('click', closeScanModal);
     if (canApply) {
-        document.getElementById('scanApplyBtn').addEventListener('click', () => {
+        const isMain = scanState.target === 'main';
+        const applyBtn = document.getElementById('scanApplyBtn');
+        applyBtn.addEventListener('click', () => {
             // 重複チェック
             const keys = scanState.cards.map(c => cardKey(c));
             if (new Set(keys).size !== 5) {
                 showToast('⚠️ カードが重複しています', 'warning');
                 return;
             }
-            state.hand = scanState.cards.map(c => ({ ...c }));
-            state.calculationResults = null;
-            document.getElementById('resultsArea').style.display = 'none';
-            renderHandPreview();
-            updateCalcButton();
-            closeScanModal();
-            showToast('📷 5枚のカードを適用しました', 'success');
+            if (isMain) {
+                // メイン手札に適用して即計算
+                state.hand = scanState.cards.map(c => ({ ...c }));
+                state.calculationResults = null;
+                document.getElementById('resultsArea').style.display = 'none';
+                renderHandPreview();
+                updateCalcButton();
+                closeScanModal();
+                runCalculation();
+            } else {
+                // 記録用最終手札に適用
+                state.recordFinalHand = scanState.cards.map(c => ({ ...c }));
+                renderRecordFinalHand();
+                closeScanModal();
+                showToast('📷 最終手札を適用しました', 'success');
+            }
         });
     }
 }
