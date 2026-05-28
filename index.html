@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ビデオポーカーの期待値計算・最適ホールド判定・プレイ記録を行うシミュレーターツール">
+    <title>Video Poker EV Simulator | ヒロ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="app-container">
+
+        <!-- ========== ヘッダー & タブナビ ========== -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">♠</span>
+                    <div class="logo-text">
+                        <h1>Poker Judge</h1>
+                        <p>最適ホールド判定シミュレーター</p>
+                    </div>
+                </div>
+                <nav class="tab-nav" role="tablist" aria-label="メインナビゲーション">
+                    <button class="tab-btn active" data-tab="calculator" role="tab" id="tab-calculator">⚡ 計算</button>
+                    <button class="tab-btn" data-tab="record" role="tab" id="tab-record">📝 記録</button>
+                    <button class="tab-btn" data-tab="dashboard" role="tab" id="tab-dashboard">📊 統計</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- ========== メインコンテンツ ========== -->
+        <main class="app-main">
+
+            <!-- ──── セクションA: EV計算 ──── -->
+            <section id="calculator" class="tab-panel active" role="tabpanel" aria-labelledby="tab-calculator">
+
+                <!-- 選択済み手札プレビュー -->
+                <div class="section-card compact-card">
+                    <div class="hand-title-row">
+                        <h2 class="section-title" style="margin-bottom:0">🃏 手札 <span class="hand-counter" id="handCounter">0 / 5</span></h2>
+                        <div class="input-actions" style="margin-top:0">
+                            <button class="btn-ghost btn-sm" id="clearAllBtn" title="全カードをクリア">🗑️</button>
+                            <button class="btn-ghost btn-sm" id="randomBtn" title="ランダムな手札を生成">🎲</button>
+                        </div>
+                    </div>
+                    <div class="hand-preview" id="handPreview">
+                        <!-- JSで描画 -->
+                    </div>
+                </div>
+
+                <!-- 52枚カードボード -->
+                <div class="section-card compact-card">
+                    <h2 class="section-title" style="margin-bottom:10px">👆 タップで選択</h2>
+                    <div class="card-board" id="cardBoard">
+                        <!-- JSで52枚を描画 -->
+                    </div>
+                </div>
+
+                <!-- アクションボタン -->
+                <div class="calc-action-row">
+                    <button class="btn-primary btn-large" id="calcBtn" disabled>
+                        <span class="btn-icon">⚡</span>
+                        期待値を計算
+                    </button>
+                    <button class="btn-secondary btn-large btn-record" id="goRecordBtn" disabled>
+                        <span class="btn-icon">📝</span>
+                        記録する
+                    </button>
+                </div>
+
+                <!-- ローディング -->
+                <div class="loading-overlay" id="loadingOverlay" aria-live="polite" style="display:none">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <p class="loading-title">32通りをシミュレーション中…</p>
+                        <div class="progress-bar" role="progressbar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p class="progress-text" id="progressText">0%</p>
+                    </div>
+                </div>
+
+                <!-- 計算結果 -->
+                <div id="resultsArea" style="display:none">
+                    <div class="section-card">
+                        <h2 class="section-title">
+                            <span class="section-icon">🏆</span>
+                            最適ホールド戦略 TOP5
+                        </h2>
+                        <div id="resultsList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ──── セクションB: プレイ記録 ──── -->
+            <section id="record" class="tab-panel" role="tabpanel" aria-labelledby="tab-record">
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <span class="section-icon">📝</span>
+                        プレイ結果を記録
+                    </h2>
+                    <div id="recordContent">
+                        <p class="hint-text">まず「⚡ 計算」タブで手札を入力して期待値を計算してください。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ──── セクションC: 統計ダッシュボード ──── -->
+            <section id="dashboard" class="tab-panel" role="tabpanel" aria-labelledby="tab-dashboard">
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <span class="section-icon">📊</span>
+                        統計ダッシュボード
+                    </h2>
+                    <div id="dashboardContent">
+                        <p class="hint-text">データを読み込み中...</p>
+                    </div>
+                </div>
+                <div class="section-card">
+                    <h2 class="section-title">
+                        <span class="section-icon">💾</span>
+                        データ管理
+                    </h2>
+                    <div class="data-management">
+                        <button class="btn-secondary" id="downloadBtn">⬇️ JSONダウンロード</button>
+                        <label class="btn-secondary" for="importFile" style="cursor:pointer">⬆️ JSONを読み込む</label>
+                        <input type="file" id="importFile" accept=".json" style="display:none" aria-label="JSONファイルを読み込む">
+                        <button class="btn-danger" id="clearHistoryBtn">🗑️ 全履歴を削除</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ========== フッター ========== -->
+        <footer class="app-footer">
+            <p>Made by <a href="https://github.com/h1ro223" target="_blank" rel="noopener">hiro / ヒロ</a>
+            &nbsp;|&nbsp; Poker Judge &nbsp;|&nbsp; Basement Poker 準拠</p>
+        </footer>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+</html>
