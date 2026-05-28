@@ -316,27 +316,16 @@ function createCardHTML(card, index, { isHeld = false, isDimmed = false } = {}) 
 function openPicker(index, target = 'main') {
     state.pickerTarget = target;
     state.pickerIndex  = index;
-    state.pickerSuit   = null;
     state.pickerRank   = null;
 
-    const existing = target === 'main' ? state.hand[index] : state.recordFinalHand[index];
-    if (existing) {
-        state.pickerSuit = existing.suitId;
-        state.pickerRank = existing.rankId;
-    }
-
     document.getElementById('pickerTitle').textContent = `カード ${index + 1} を選択`;
-    renderPickerSuits();
-    renderPickerRanks();
-
-    document.getElementById('pickerStepRank').style.display = state.pickerSuit ? 'block' : 'none';
     document.getElementById('pickerOverlay').style.display = 'flex';
+    renderPickerBody();
 }
 
 function closePicker() {
     document.getElementById('pickerOverlay').style.display = 'none';
     state.pickerIndex = null;
-    state.pickerSuit  = null;
     state.pickerRank  = null;
 }
 
@@ -348,87 +337,94 @@ function getUsedKeys() {
     );
 }
 
-function renderPickerSuits() {
-    const container = document.getElementById('pickerSuitRow');
-    container.innerHTML = SUITS.map(suit => {
-        const sel = state.pickerSuit === suit.id ? 'selected' : '';
-        const col = suit.color === 'red' ? 'spb-red' : 'spb-black';
-        return `<button class="suit-pick-btn ${col} ${sel}" data-suit="${suit.id}">
-            <span class="spb-icon">${suit.symbol}</span>
-            <span class="spb-name">${suit.name}</span>
-        </button>`;
-    }).join('');
-
-    container.querySelectorAll('.suit-pick-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.pickerSuit = btn.dataset.suit;
-            state.pickerRank = null; // スート変えたらランクリセット
-            renderPickerSuits();
-            renderPickerRanks();
-            document.getElementById('pickerStepRank').style.display = 'block';
-        });
-    });
-}
-
-function renderPickerRanks() {
-    const container = document.getElementById('pickerRankGrid');
-    if (!state.pickerSuit) { container.innerHTML = ''; return; }
-
+function renderPickerBody() {
+    const body = document.getElementById('pickerBody');
     const usedKeys = getUsedKeys();
 
-    container.innerHTML = RANKS.map(rank => {
-        const key = `${state.pickerSuit}-${rank.id}`;
-        const isUsed = usedKeys.has(key);
-        const isSel  = state.pickerRank === rank.id;
-        return `<button class="rank-pick-btn ${isSel ? 'selected' : ''}"
-                    data-rank="${rank.id}" ${isUsed ? 'disabled' : ''}>
-            ${rank.short}
-        </button>`;
+    // ランクボタン
+    const ranksHTML = RANKS.map(r => {
+        const sel = state.pickerRank === r.id ? 'scan-rbtn-active' : '';
+        return `<button class="scan-rbtn ${sel}" data-rank="${r.id}">${r.short}</button>`;
     }).join('');
 
-    container.querySelectorAll('.rank-pick-btn:not(:disabled)').forEach(btn => {
+    // スートボタン（ランク選択後に表示）
+    let suitsHTML = '';
+    if (state.pickerRank) {
+        suitsHTML = SUITS.map(s => {
+            const key = `${s.id}-${state.pickerRank}`;
+            const isUsed = usedKeys.has(key);
+            const col = s.color === 'red' ? 'scan-sbtn-red' : 'scan-sbtn-black';
+            return `<button class="scan-sbtn ${col}" data-suit="${s.id}" ${isUsed ? 'disabled' : ''}>${s.symbol}</button>`;
+        }).join('');
+    }
+
+    // 現在のカード情報
+    const hand = state.pickerTarget === 'main' ? state.hand : state.recordFinalHand;
+    const existing = hand[state.pickerIndex];
+    const existingHTML = existing
+        ? `<p class="picker-current">現在: <strong class="${getSuitColorClass(existing.suitId)}">${getRankShort(existing.rankId)}${getSuitSymbol(existing.suitId)}</strong></p>`
+        : '';
+
+    body.innerHTML = `
+        ${existingHTML}
+        <div class="scan-input-area">
+            <p class="scan-hint-label">数字を選択</p>
+            <div class="scan-rank-row">${ranksHTML}</div>
+            ${state.pickerRank ? `<p class="scan-hint-label" style="margin-top:10px">マークを選択</p><div class="scan-suit-row">${suitsHTML}</div>` : '<p class="scan-hint">↑ 数字を選んでください</p>'}
+        </div>
+        <div class="picker-footer">
+            ${existing ? '<button class="btn-ghost btn-sm" id="pickerClearBtn">🗑️ クリア</button>' : ''}
+            <button class="btn-ghost btn-sm" id="pickerCancelBtn">キャンセル</button>
+        </div>
+    `;
+
+    // ランクタップ
+    body.querySelectorAll('.scan-rbtn').forEach(btn => {
         btn.addEventListener('click', () => {
             state.pickerRank = parseInt(btn.dataset.rank, 10);
-            // 自動登録
-            confirmPicker();
+            renderPickerBody();
         });
     });
-}
 
-/** ピッカーで選択を確定 */
-function confirmPicker() {
-    if (!state.pickerSuit || state.pickerRank === null) return;
-    const card = { suitId: state.pickerSuit, rankId: state.pickerRank };
+    // スートタップ → 即登録
+    body.querySelectorAll('.scan-sbtn:not(:disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = { suitId: btn.dataset.suit, rankId: state.pickerRank };
+            if (state.pickerTarget === 'main') {
+                state.hand[state.pickerIndex] = card;
+                state.calculationResults = null;
+                document.getElementById('resultsArea').style.display = 'none';
+                renderHandPreview();
+                updateCalcButton();
+            } else {
+                state.recordFinalHand[state.pickerIndex] = card;
+                renderRecordFinalHand();
+            }
+            closePicker();
+        });
+    });
 
-    if (state.pickerTarget === 'main') {
-        state.hand[state.pickerIndex] = card;
-        state.calculationResults = null;
-        document.getElementById('resultsArea').style.display = 'none';
-        renderHandPreview();
-        updateCalcButton();
-    } else {
-        state.recordFinalHand[state.pickerIndex] = card;
-        renderRecordFinalHand();
+    // クリアボタン
+    const clearBtn = document.getElementById('pickerClearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (state.pickerTarget === 'main') {
+                state.hand[state.pickerIndex] = null;
+                compactHand();
+                state.calculationResults = null;
+                document.getElementById('resultsArea').style.display = 'none';
+                renderHandPreview();
+                updateCalcButton();
+            } else {
+                state.recordFinalHand[state.pickerIndex] = null;
+                renderRecordFinalHand();
+            }
+            closePicker();
+        });
     }
 
-    closePicker();
-}
-
-/** ピッカー上のクリアボタン */
-function clearPickerCard() {
-    if (state.pickerTarget === 'main') {
-        state.hand[state.pickerIndex] = null;
-        compactHand();
-        state.calculationResults = null;
-        document.getElementById('resultsArea').style.display = 'none';
-        renderHandPreview();
-        updateCalcButton();
-    } else {
-        state.recordFinalHand[state.pickerIndex] = null;
-        compactRecordHand();
-        renderRecordFinalHand();
-    }
-    closePicker();
+    // キャンセルボタン
+    document.getElementById('pickerCancelBtn')?.addEventListener('click', closePicker);
 }
 
 // =============================================================
@@ -617,6 +613,12 @@ function renderRecordPanel() {
     document.getElementById('saveResultBtn').addEventListener('click', savePlayResult);
     document.getElementById('recordScanBtn').addEventListener('click', () => {
         scanState.target = 'record';
+        // HOLDカードをプリフィル
+        scanState.cards = state.recordFinalHand.map(c => c ? { ...c } : null);
+        // 最初の空きスロットをアクティブに
+        const firstEmpty = scanState.cards.findIndex(c => c === null);
+        scanState.activeSlot = firstEmpty >= 0 ? firstEmpty : 0;
+        scanState.selectedRank = null;
         document.getElementById('scanFileInput').click();
     });
     // バリデーション: 選択変更時に警告を消す
@@ -995,8 +997,11 @@ function closeScanModal() {
 
 function handleScanFile(file) {
     if (!file) return;
-    scanState.cards = [null,null,null,null,null];
-    scanState.activeSlot = 0;
+    // recordモード時はプリフィル済みのカードを保持
+    if (scanState.target !== 'record') {
+        scanState.cards = [null,null,null,null,null];
+        scanState.activeSlot = 0;
+    }
     scanState.selectedRank = null;
 
     const reader = new FileReader();
@@ -1191,7 +1196,6 @@ function init() {
 
     // ピッカー
     document.getElementById('pickerClose').addEventListener('click', closePicker);
-    document.getElementById('pickerClearBtn').addEventListener('click', clearPickerCard);
     document.getElementById('pickerOverlay').addEventListener('click', (e) => {
         if (e.target === document.getElementById('pickerOverlay')) closePicker();
     });
