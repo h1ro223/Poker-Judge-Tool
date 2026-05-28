@@ -41,11 +41,11 @@ const PAYOUTS = {
 };
 
 const HAND_NAMES = {
-    ROYAL_FLUSH: 'ロイヤルフラッシュ', STRAIGHT_FLUSH: 'ストレートフラッシュ',
-    FOUR_OF_A_KIND: 'フォーオブアカインド', FULL_HOUSE: 'フルハウス',
-    FLUSH: 'フラッシュ', STRAIGHT: 'ストレート',
-    THREE_OF_A_KIND: 'スリーオブアカインド', TWO_PAIR: 'ツーペア',
-    JACKS_OR_BETTER: 'ジャックスオアベター', NOTHING: 'ハズレ',
+    ROYAL_FLUSH: 'Royal Flush', STRAIGHT_FLUSH: 'Straight Flush',
+    FOUR_OF_A_KIND: 'Four of a Kind', FULL_HOUSE: 'Full House',
+    FLUSH: 'Flush', STRAIGHT: 'Straight',
+    THREE_OF_A_KIND: 'Three of a Kind', TWO_PAIR: 'Two Pair',
+    JACKS_OR_BETTER: 'Jacks or Better', NOTHING: 'Nothing',
 };
 
 const HAND_ORDER = [
@@ -240,25 +240,25 @@ function generateStrategyReason(top, all, hand) {
     } else {
         const hs = hc.map(c => `<strong>${cs(c)}</strong>`).join('・');
         if (ana) {
-            if (ana.hasQuads) { lines.push(`${hs} で${hl('フォーオブアカインド（+600）', 'gold')}が確定します。`); }
+            if (ana.hasQuads) { lines.push(`${hs} で${hl('Four of a Kind (+600)', 'gold')}が確定します。`); }
             else if (ana.hasTrips) {
-                lines.push(`${hs} は ${hl(rn(ana.tripRank) + 'のスリーカード')}です。`);
-                if (dist.FOUR_OF_A_KIND > 0) lines.push(`${hl('フォーカインド')}に昇格する確率: ${hl(pct(dist.FOUR_OF_A_KIND) + '%')}`);
-                if (dist.FULL_HOUSE > 0) lines.push(`${hl('フルハウス', 'gold')}の確率: ${hl(pct(dist.FULL_HOUSE) + '%')}`);
+                lines.push(`${hs} は ${hl(rn(ana.tripRank) + 'のThree of a Kind')}です。`);
+                if (dist.FOUR_OF_A_KIND > 0) lines.push(`${hl('Four of a Kind')}に昇格する確率: ${hl(pct(dist.FOUR_OF_A_KIND) + '%')}`);
+                if (dist.FULL_HOUSE > 0) lines.push(`${hl('Full House', 'gold')}の確率: ${hl(pct(dist.FULL_HOUSE) + '%')}`);
             }
-            else if (ana.hasTwoPair) { lines.push(`${hs} は${hl('ツーペア')}。${hl('フルハウス（+300）', 'gold')}への昇格チャンスがあります。`); }
+            else if (ana.hasTwoPair) { lines.push(`${hs} は${hl('Two Pair')}。${hl('Full House (+300)', 'gold')}への昇格チャンスがあります。`); }
             else if (ana.hasPair) {
                 const pr = rn(ana.pairRank), isH = ana.pairRank >= 11;
-                if (isH) { lines.push(`${hs} は${hl(pr + 'のハイペア')}。${hl('最低10の配当保証')}＋上位役への昇格チャンスがあります。`); }
-                else { lines.push(`${hs} は${hl(pr + 'のローペア')}。配当なしですが${hl('スリーカード・フルハウス')}への発展チャンスがあります。`); }
+                if (isH) { lines.push(`${hs} は${hl(pr + 'のHigh Pair')}。${hl('最低10の配当保証')}＋上位役への昇格チャンスがあります。`); }
+                else { lines.push(`${hs} は${hl(pr + 'のLow Pair')}。配当なしですが${hl('Three of a Kind / Full House')}への発展チャンスがあります。`); }
             }
             else if (ana.flushDraw) {
-                lines.push(`${hs} は ${hl(sn(ana.flushDrawSuit) + 'の' + n + '枚フラッシュドロー')}です。`);
-                if (dist.FLUSH > 0) lines.push(`${hl('フラッシュ（+200）', 'gold')}の確率: ${hl(pct(dist.FLUSH) + '%')}`);
+                lines.push(`${hs} は ${hl(sn(ana.flushDrawSuit) + 'の' + n + '枚Flush Draw')}です。`);
+                if (dist.FLUSH > 0) lines.push(`${hl('Flush (+200)', 'gold')}の確率: ${hl(pct(dist.FLUSH) + '%')}`);
             }
             else if (ana.straightDraw) {
-                lines.push(`${hs} は${hl('ストレートドロー')}です。`);
-                if (dist.STRAIGHT > 0) lines.push(`${hl('ストレート（+125）', 'gold')}の確率: ${hl(pct(dist.STRAIGHT) + '%')}`);
+                lines.push(`${hs} は${hl('Straight Draw')}です。`);
+                if (dist.STRAIGHT > 0) lines.push(`${hl('Straight (+125)', 'gold')}の確率: ${hl(pct(dist.STRAIGHT) + '%')}`);
             }
             else if (ana.highCardCount > 0) { lines.push(`${hs} の${hl(ana.highCardCount + '枚のハイカード')}を残し、${hl('Jacks or Better')}ペアの確率を最大化。`); }
             else { lines.push(`${hs} をキープすることで期待値が最大化されます。`); }
@@ -582,10 +582,23 @@ function renderRecordPanel() {
             <label class="form-label">実際に選んだホールドパターン</label>
             <div class="hold-checkboxes">${cbs}</div>
         </div>
-        <div class="record-section">
-            <label class="form-label" for="finalHand">最終的に完成した役</label>
-            <select class="form-select" id="finalHand">${opts}</select>
-            <p class="form-warning" id="finalHandWarning">⚠️ 完成した役を選択してください</p>
+        <div class="record-section record-row-2col">
+            <div>
+                <label class="form-label" for="finalHand">最終的に完成した役</label>
+                <select class="form-select" id="finalHand">${opts}</select>
+                <p class="form-warning" id="finalHandWarning">⚠️ 完成した役を選択してください</p>
+            </div>
+            <div>
+                <label class="form-label" for="betAmount">BET数</label>
+                <select class="form-select" id="betAmount">
+                    <option value="1" selected>1 BET</option>
+                    <option value="2">2 BET</option>
+                    <option value="3">3 BET</option>
+                    <option value="4">4 BET</option>
+                    <option value="5">5 BET</option>
+                    <option value="10">10 BET</option>
+                </select>
+            </div>
         </div>
         <div class="record-section record-card-board-wrap">
             <label class="form-label">ホールド後の最終手札（タップで入力）</label>
@@ -665,6 +678,8 @@ function savePlayResult() {
     const followed = JSON.stringify(actualHeld) === JSON.stringify(optSorted);
     const finalCards = state.recordFinalHand.filter(c => c !== null).map(c => ({ suitId: c.suitId, rankId: c.rankId }));
 
+    const bet = parseInt(document.getElementById('betAmount')?.value || '1', 10);
+
     history.push({
         id: Date.now(),
         timestamp: new Date().toISOString(),
@@ -675,6 +690,7 @@ function savePlayResult() {
         finalHandName: HAND_NAMES[finalHandKey],
         finalCards,
         payout: PAYOUTS[finalHandKey],
+        bet,
         followedOptimal: followed,
     });
 
@@ -733,6 +749,7 @@ function renderDashboard() {
                     return `<div class="history-row" data-id="${r.id}">
                         <span class="history-date">${d}</span>
                         <span class="history-hand">${r.finalHandName || '—'}</span>
+                        <span class="history-bet">${r.bet || 1}B</span>
                         <span class="history-payout ${pC}">${r.payout > 0 ? '+' : ''}${r.payout}</span>
                         <span class="history-follow">${fI}</span>
                     </div>`;
@@ -952,7 +969,176 @@ function showToast(message, type = 'info') {
 }
 
 // =============================================================
-// § 22. 初期化
+// § 22. スクショ参照＋クイック5枚入力
+// =============================================================
+
+const scanState = { cards: [null,null,null,null,null], activeSlot: 0, selectedRank: null };
+
+function openScanInput() {
+    document.getElementById('scanFileInput').click();
+}
+
+function closeScanModal() {
+    document.getElementById('scanOverlay').style.display = 'none';
+    scanState.cards = [null,null,null,null,null];
+    scanState.activeSlot = 0;
+    scanState.selectedRank = null;
+}
+
+function handleScanFile(file) {
+    if (!file) return;
+    scanState.cards = [null,null,null,null,null];
+    scanState.activeSlot = 0;
+    scanState.selectedRank = null;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            // カード部分だけ切り出し（カード5枚にフォーカス）
+            const cropW = Math.round(img.width * 0.80);
+            const cropH = Math.round(img.width * 0.35);
+            const sx = Math.round((img.width - cropW) / 2);
+            const sy = Math.round((img.height - cropH) / 2 + img.height * 0.06);
+            const cv = document.createElement('canvas');
+            cv.width = cropW; cv.height = cropH;
+            const ctx = cv.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
+            const croppedUrl = cv.toDataURL('image/jpeg', 0.85);
+
+            document.getElementById('scanOverlay').style.display = 'flex';
+            renderScanUI(croppedUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function renderScanUI(imgUrl) {
+    const content = document.getElementById('scanContent');
+    const cards = scanState.cards;
+    const active = scanState.activeSlot;
+
+    // スロット表示
+    const slotsHTML = cards.map((c, i) => {
+        const isFilled = c !== null;
+        const isActive = i === active;
+        const cls = `scan-slot ${isActive ? 'scan-slot-active' : ''} ${isFilled ? 'scan-slot-filled' : ''}`;
+        if (isFilled) {
+            const sym = getSuitSymbol(c.suitId);
+            const rk = getRankShort(c.rankId);
+            const col = getSuitColorClass(c.suitId);
+            return `<div class="${cls}" data-slot="${i}">
+                <span class="scan-slot-rank ${col}">${rk}</span>
+                <span class="scan-slot-suit ${col}">${sym}</span>
+            </div>`;
+        }
+        return `<div class="${cls}" data-slot="${i}">
+            <span class="scan-slot-num">${i + 1}</span>
+        </div>`;
+    }).join('');
+
+    // ランクボタン（先に数字を選ぶ）
+    const ranksHTML = RANKS.map(r => {
+        const sel = scanState.selectedRank === r.id ? 'scan-rbtn-active' : '';
+        return `<button class="scan-rbtn ${sel}" data-rank="${r.id}">${r.short}</button>`;
+    }).join('');
+
+    // スートボタン（数字選択後に表示）
+    let suitsHTML = '';
+    if (scanState.selectedRank) {
+        const usedKeys = new Set(cards.filter((c, i) => c !== null && i !== active).map(c => cardKey(c)));
+        suitsHTML = SUITS.map(s => {
+            const key = `${s.id}-${scanState.selectedRank}`;
+            const isUsed = usedKeys.has(key);
+            const col = s.color === 'red' ? 'scan-sbtn-red' : 'scan-sbtn-black';
+            return `<button class="scan-sbtn ${col}" data-suit="${s.id}" ${isUsed ? 'disabled' : ''}>${s.symbol}</button>`;
+        }).join('');
+    }
+
+    const filledCount = cards.filter(c => c !== null).length;
+    const canApply = filledCount === 5;
+
+    content.innerHTML = `
+        <img src="${imgUrl}" class="scan-preview" id="scanImg">
+
+        <p class="scan-instruction">🎯 スクショを見ながら5枚入力（カード <strong>${active + 1}</strong> / 5）</p>
+        <div class="scan-slots">${slotsHTML}</div>
+        <div class="scan-input-area">
+            <div class="scan-rank-row">${ranksHTML}</div>
+            ${scanState.selectedRank ? `<div class="scan-suit-row">${suitsHTML}</div>` : '<p class="scan-hint">↑ 数字を選んでください</p>'}
+        </div>
+        <div class="scan-actions">
+            <button class="btn-ghost" id="scanCancelBtn">キャンセル</button>
+            <button class="btn-primary ${canApply ? '' : 'disabled'}" id="scanApplyBtn" ${canApply ? '' : 'disabled'}>✅ 適用する（${filledCount}/5）</button>
+        </div>
+    `;
+
+    // イベント：スロットタップ
+    content.querySelectorAll('.scan-slot').forEach(el => {
+        el.addEventListener('click', () => {
+            const idx = parseInt(el.dataset.slot, 10);
+            if (cards[idx]) {
+                scanState.cards[idx] = null;
+                scanState.activeSlot = idx;
+                scanState.selectedRank = null;
+            } else {
+                scanState.activeSlot = idx;
+                scanState.selectedRank = null;
+            }
+            renderScanUI(document.getElementById('scanImg').src);
+        });
+    });
+
+    // イベント：ランクタップ
+    content.querySelectorAll('.scan-rbtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            scanState.selectedRank = parseInt(btn.dataset.rank, 10);
+            renderScanUI(document.getElementById('scanImg').src);
+        });
+    });
+
+    // イベント：スートタップ → 即登録 & 次のスロットへ
+    content.querySelectorAll('.scan-sbtn:not(:disabled)').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const suitId = btn.dataset.suit;
+            scanState.cards[active] = { suitId, rankId: scanState.selectedRank };
+            // 次の空きスロットに進む
+            let next = -1;
+            for (let i = 1; i <= 5; i++) {
+                const ni = (active + i) % 5;
+                if (!scanState.cards[ni]) { next = ni; break; }
+            }
+            scanState.activeSlot = next >= 0 ? next : active;
+            scanState.selectedRank = null;
+            renderScanUI(document.getElementById('scanImg').src);
+        });
+    });
+
+    // キャンセル/適用
+    document.getElementById('scanCancelBtn').addEventListener('click', closeScanModal);
+    if (canApply) {
+        document.getElementById('scanApplyBtn').addEventListener('click', () => {
+            // 重複チェック
+            const keys = scanState.cards.map(c => cardKey(c));
+            if (new Set(keys).size !== 5) {
+                showToast('⚠️ カードが重複しています', 'warning');
+                return;
+            }
+            state.hand = scanState.cards.map(c => ({ ...c }));
+            state.calculationResults = null;
+            document.getElementById('resultsArea').style.display = 'none';
+            renderHandPreview();
+            updateCalcButton();
+            closeScanModal();
+            showToast('📷 5枚のカードを適用しました', 'success');
+        });
+    }
+}
+
+// =============================================================
+// § 23. 初期化
 // =============================================================
 
 function init() {
@@ -999,7 +1185,18 @@ function init() {
 
     // Escape キー
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closePicker(); closeEditModal(); }
+        if (e.key === 'Escape') { closePicker(); closeEditModal(); closeScanModal(); }
+    });
+
+    // スキャン
+    document.getElementById('scanBtn').addEventListener('click', openScanInput);
+    document.getElementById('scanFileInput').addEventListener('change', (e) => {
+        const f = e.target.files?.[0]; if (f) handleScanFile(f);
+        e.target.value = '';
+    });
+    document.getElementById('scanClose').addEventListener('click', closeScanModal);
+    document.getElementById('scanOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('scanOverlay')) closeScanModal();
     });
 
     // データ管理
