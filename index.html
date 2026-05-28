@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ビデオポーカーの期待値計算・最適ホールド判定・プレイ記録を行うシミュレーターツール">
-    <title>Video Poker EV Simulator | ヒロ</title>
+    <title>Poker Judge Tool | ヒロ</title>
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="icon" type="image/png" href="./icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Poker Judge Tool">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
@@ -18,7 +23,7 @@
                 <div class="logo">
                     <span class="logo-icon">♠</span>
                     <div class="logo-text">
-                        <h1>Poker Judge</h1>
+                        <h1>Poker Judge Tool</h1>
                         <p>最適ホールド判定シミュレーター</p>
                     </div>
                 </div>
@@ -36,7 +41,7 @@
             <!-- ──── セクションA: EV計算 ──── -->
             <section id="calculator" class="tab-panel active" role="tabpanel" aria-labelledby="tab-calculator">
 
-                <!-- 選択済み手札プレビュー -->
+                <!-- 手札プレビュー -->
                 <div class="section-card compact-card">
                     <div class="hand-title-row">
                         <h2 class="section-title" style="margin-bottom:0">🃏 手札 <span class="hand-counter" id="handCounter">0 / 5</span></h2>
@@ -47,14 +52,6 @@
                     </div>
                     <div class="hand-preview" id="handPreview">
                         <!-- JSで描画 -->
-                    </div>
-                </div>
-
-                <!-- 52枚カードボード -->
-                <div class="section-card compact-card">
-                    <h2 class="section-title" style="margin-bottom:10px">👆 タップで選択</h2>
-                    <div class="card-board" id="cardBoard">
-                        <!-- JSで52枚を描画 -->
                     </div>
                 </div>
 
@@ -133,10 +130,54 @@
             </section>
         </main>
 
+        <!-- ========== カードピッカーモーダル ========== -->
+        <div class="picker-overlay" id="pickerOverlay" style="display:none">
+            <div class="picker-sheet">
+                <div class="picker-header">
+                    <span class="picker-title" id="pickerTitle">カードを選択</span>
+                    <button class="picker-close" id="pickerClose">✕</button>
+                </div>
+
+                <!-- ステップ1: スート選択 -->
+                <div class="picker-step" id="pickerStepSuit">
+                    <p class="picker-label">マークを選んでください</p>
+                    <div class="picker-suit-row" id="pickerSuitRow">
+                        <!-- JSで描画 -->
+                    </div>
+                </div>
+
+                <!-- ステップ2: ランク選択 -->
+                <div class="picker-step" id="pickerStepRank" style="display:none">
+                    <p class="picker-label">数字を選んでください</p>
+                    <div class="picker-rank-grid" id="pickerRankGrid">
+                        <!-- JSで描画 -->
+                    </div>
+                </div>
+
+                <!-- フッターアクション -->
+                <div class="picker-footer">
+                    <button class="btn-ghost btn-sm" id="pickerClearBtn">🗑️ このカードをクリア</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 履歴編集モーダル ========== -->
+        <div class="edit-overlay" id="editOverlay" style="display:none">
+            <div class="edit-sheet">
+                <div class="picker-header">
+                    <span class="picker-title">📋 プレイ記録を編集</span>
+                    <button class="picker-close" id="editClose">✕</button>
+                </div>
+                <div id="editContent">
+                    <!-- JSで描画 -->
+                </div>
+            </div>
+        </div>
+
         <!-- ========== フッター ========== -->
         <footer class="app-footer">
             <p>Made by <a href="https://github.com/h1ro223" target="_blank" rel="noopener">hiro / ヒロ</a>
-            &nbsp;|&nbsp; Poker Judge &nbsp;|&nbsp; Basement Poker 準拠</p>
+            &nbsp;|&nbsp; Poker Judge Tool &nbsp;|&nbsp; Basement Poker 準拠</p>
         </footer>
     </div>
 
